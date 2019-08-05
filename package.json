@@ -5,11 +5,12 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    ".": "node server.js"
+    "start":"node ./src/example/authorizing.js"
   },
   "author": "Hun Vikran",
   "license": "ISC",
   "dependencies": {
+    "cron": "^1.7.1",
     "googleapis": "^39.2.0"
   }
 }

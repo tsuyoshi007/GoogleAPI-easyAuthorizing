@@ -56,11 +56,12 @@ class Google {
       await readFile(this.tokenPath).then(token => {
         this.tokenJSON = JSON.parse(token);
         this.oAuth2Client.setCredentials(this.tokenJSON);
+        this.drive = google.drive({ version: 'v3', auth: this.oAuth2Client });
         // <- you set an api property for our class here
         // for example if you want to add drive api : this.drive = google.drive({ version: 'v3', auth: this.oAuth2Client });
         resolve(true);
       }).catch((err) => {
-        resolve(err);
+        reject(err);
       });
     });
   }
@@ -84,6 +85,7 @@ class Google {
           } else {
             this.oAuth2Client.setCredentials(token);
             await writeFile(this.tokenPath, JSON.stringify(token)).then(() => {
+              this.drive = google.drive({ version: 'v3', auth: this.oAuth2Client });
               // <- you set an api property for our class here
               // for example if you want to add drive api : this.drive = google.drive({ version: 'v3', auth: this.oAuth2Client });
               resolve(true);
@@ -95,8 +97,24 @@ class Google {
       });
     });
   }
-
   // Please add method for your api here
+  listFiles () {
+    this.drive.files.list({
+      pageSize: 10,
+      fields: 'nextPageToken, files(id, name)'
+    }, (err, res) => {
+      if (err) return console.log('The API returned an error: ' + err);
+      const files = res.data.files;
+      if (files.length) {
+        console.log('Files:');
+        files.map((file) => {
+          console.log(`${file.name} (${file.id})`);
+        });
+      } else {
+        console.log('No files found.');
+      }
+    });
+  }
 }
 
 function readFile (path) {
@@ -125,8 +143,12 @@ function writeFile (path, data) {
 
 function accessFile (path) {
   return new Promise(function (resolve) {
-    fs.access(path, fs.constants.F_OK, () => {
-      resolve(true);
+    fs.access(path, fs.constants.F_OK, (err) => {
+      if (err) {
+        resolve(false);
+      } else {
+        resolve(true);
+      }
     });
   });
 }
