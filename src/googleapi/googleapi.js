@@ -97,7 +97,6 @@ class Google {
   }
 
   // Please add method for your api here
-  // this.oAuth2Client
 }
 
 function readFile (path) {
