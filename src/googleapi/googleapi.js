@@ -35,16 +35,16 @@ class Google {
         client_id, client_secret, redirect_uris[0]);
       await accessFile(self.tokenPath).then(async (found) => {
         if (found) {
-          await self.setToken().then(msg => {
-            console.log('Token set');
+          await self.setToken().then(() => {
+            resolve('Token set');
           }).catch(err => {
-            console.log(err);
+            reject(err);
           });
         } else {
           self.getNewAccessToken().then(() => {
-            console.log('New Token Saved');
+            resolve('New Token Saved');
           }).catch(err => {
-            console.log(err);
+            reject(err);
           });
         }
       });
@@ -97,6 +97,7 @@ class Google {
   }
 
   // Please add method for your api here
+  // this.oAuth2Client
 }
 
 function readFile (path) {
