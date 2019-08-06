@@ -79,5 +79,5 @@ typings/
 # DynamoDB Local files
 .dynamodb/
 
-/src/credentials.json
-/src/token.json
+credentials.json
+token.json

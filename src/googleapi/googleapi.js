@@ -1,10 +1,15 @@
-const fs = require('fs');
 const readline = require('readline');
+const fs = require('fs');
 const {
   google
 } = require('googleapis');
 
 class Google {
+  /**
+   * @param {credentials} String
+   * @param {tokenPat h} String
+   * @param {scopes} String
+   */
   constructor ({
     credentials,
     tokenPath,
@@ -19,10 +24,9 @@ class Google {
     this.drive = null;
   }
   authorize () {
-    let self = this;
-    return new Promise(async function (resolve, reject) {
-      await readFile(self.credentialsPath).then(output => {
-        self.credentialsJSON = JSON.parse(output);
+    return new Promise(async (resolve, reject) => {
+      await readFile(this.credentialsPath).then(output => {
+        this.credentialsJSON = JSON.parse(output);
       }).catch((err) => {
         reject(err);
       });
@@ -30,18 +34,18 @@ class Google {
         client_id,
         client_secret,
         redirect_uris
-      } = self.credentialsJSON.installed;
-      self.oAuth2Client = new google.auth.OAuth2(
+      } = this.credentialsJSON.installed;
+      this.oAuth2Client = new google.auth.OAuth2(
         client_id, client_secret, redirect_uris[0]);
-      await accessFile(self.tokenPath).then(async (found) => {
+      await accessFile(this.tokenPath).then(async (found) => {
         if (found) {
-          await self.setToken().then(() => {
+          await this.setToken().then(() => {
             resolve('Token set');
           }).catch(err => {
             reject(err);
           });
         } else {
-          self.getNewAccessToken().then(() => {
+          this.getNewAccessToken().then(() => {
             resolve('New Token Saved');
           }).catch(err => {
             reject(err);
@@ -56,11 +60,12 @@ class Google {
       await readFile(this.tokenPath).then(token => {
         this.tokenJSON = JSON.parse(token);
         this.oAuth2Client.setCredentials(this.tokenJSON);
+        this.drive = google.drive({ version: 'v3', auth: this.oAuth2Client });
         // <- you set an api property for our class here
         // for example if you want to add drive api : this.drive = google.drive({ version: 'v3', auth: this.oAuth2Client });
         resolve(true);
       }).catch((err) => {
-        resolve(err);
+        reject(err);
       });
     });
   }
@@ -84,6 +89,7 @@ class Google {
           } else {
             this.oAuth2Client.setCredentials(token);
             await writeFile(this.tokenPath, JSON.stringify(token)).then(() => {
+              this.drive = google.drive({ version: 'v3', auth: this.oAuth2Client });
               // <- you set an api property for our class here
               // for example if you want to add drive api : this.drive = google.drive({ version: 'v3', auth: this.oAuth2Client });
               resolve(true);
@@ -95,10 +101,9 @@ class Google {
       });
     });
   }
-
-  // Please add method for your api here
 }
 
+// fs with promise
 function readFile (path) {
   return new Promise(function (resolve, reject) {
     fs.readFile(path, (err, output) => {
@@ -125,8 +130,12 @@ function writeFile (path, data) {
 
 function accessFile (path) {
   return new Promise(function (resolve) {
-    fs.access(path, fs.constants.F_OK, () => {
-      resolve(true);
+    fs.access(path, fs.constants.F_OK, (err) => {
+      if (err) {
+        resolve(false);
+      } else {
+        resolve(true);
+      }
     });
   });
 }
